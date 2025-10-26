@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <title>Seesaw Sim</title>
+</head>
+
+<body>
+  <div class="container">
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-label">SOL</div>
+        <div class="stat-value" id="leftWeight">0.0 kg</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">SONRAKİ</div>
+        <div class="stat-value" id="nextWeight">10 kg</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">SAĞ</div>
+        <div class="stat-value" id="rightWeight">0.0 kg</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">EĞİM</div>
+        <div class="stat-value" id="angle">0.0°</div>
+      </div>
+    </div>
+
+    <div class="seesaw-container" id="seesawContainer">
+      <div class="ground"></div>
+      <div class="pivot"></div>
+      <div class="seesaw-plank" id="seesawPlank"></div>
+      <div class="seesaw-clickable" id="seesawClickable"></div>
+    </div>
+
+    <div class="controls">
+      <button id="resetBtn">🔄 Sıfırla</button>
+      <button id="stopBtn">Durdur</button>
+      <button id="startBtn">Devam Et</button>
+    </div>
+
+    <div class="log" id="log"></div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+
+</html>
