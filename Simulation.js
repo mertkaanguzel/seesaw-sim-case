@@ -1,10 +1,11 @@
 import { Seesaw } from './Seesaw.js';
+import { Weight } from './Weight.js';
 
 export class Simulation {
     static instance = null;
-    static PLANK_LENGTH = 400;
-    static CONTAINER_WIDTH = 800;
-    static CONTAINER_HEIGHT = 500;
+    static PlankLength = 400;
+    static ContainerWidth = 800;
+    static ContainerHeight = 500;
 
     constructor() {
         if (Simulation.instance) {
@@ -27,7 +28,7 @@ export class Simulation {
         Simulation.instance = this;
     }
 
-    static run() {
+    static getInstance() {
         if (!Simulation.instance) {
             Simulation.instance = new Simulation();
         }
@@ -40,15 +41,20 @@ export class Simulation {
 
     setupEventListeners() {
         this.seesawClickable.addEventListener('click', (e) => {
-
+            e.stopPropagation();
+            const positionX = this.getConstrainedPosition(e);
+            this.dropWeight(positionX);
+            this.removePreview();
         });
 
         this.seesawClickable.addEventListener('mousemove', (e) => {
-
+            e.stopPropagation();
+            const positionX = this.getConstrainedPosition(e);
+            this.showPreview(positionX);
         });
 
         this.seesawClickable.addEventListener('mouseleave', () => {
- 
+            this.removePreview();
         });
 
         this.resetBtn.addEventListener('click', () => {
@@ -57,6 +63,57 @@ export class Simulation {
     }
 
 
+    getConstrainedPosition(e) {
+        const containerRect = this.seesawContainer.getBoundingClientRect();
+        const clickX = e.clientX - containerRect.left - Simulation.ContainerWidth / 2;
+        return Math.max(-Simulation.PlankLength / 2, Math.min(Simulation.PlankLength / 2, clickX));
+    }
+
+    dropWeight(positionX) {
+        const weight = this.seesaw.addWeight(this.nextWeight, positionX);
+
+        this.addLogEntry(
+            `📦 ${weight.mass}kg dropped on ${weight.side} side at ${weight.distance.toFixed(0)}px from center`
+        );
+
+        this.nextWeight = this.generateRandomWeight();
+        this.updateStats();
+    }
+
+    showPreview(positionX) {
+        this.removePreview();
+
+        const size = 15 + this.nextWeight * 2;
+
+        this.previewElement = document.createElement('div');
+        this.previewElement.className = 'preview-object';
+        this.previewElement.style.width = `${size * 2}px`;
+        this.previewElement.style.height = `${size * 2}px`;
+        this.previewElement.style.background = '#3498db';
+        this.previewElement.style.left = `${Simulation.ContainerWidth / 2 + positionX - size}px`;
+        this.previewElement.style.top = `${Simulation.ContainerHeight / 2 - 80}px`;
+        this.previewElement.textContent = `${this.nextWeight}kg`;
+
+        this.previewLineElement = document.createElement('div');
+        this.previewLineElement.className = 'preview-line';
+        this.previewLineElement.style.left = `${Simulation.ContainerWidth / 2 + positionX}px`;
+        this.previewLineElement.style.top = `${Simulation.ContainerHeight / 2 - 80 + size}px`;
+        this.previewLineElement.style.height = `${80 - size}px`;
+
+        this.seesawContainer.appendChild(this.previewElement);
+        this.seesawContainer.appendChild(this.previewLineElement);
+    }
+
+    removePreview() {
+        if (this.previewElement) {
+            this.seesawContainer.removeChild(this.previewElement);
+            this.previewElement = null;
+        }
+        if (this.previewLineElement) {
+            this.seesawContainer.removeChild(this.previewLineElement);
+            this.previewLineElement = null;
+        }
+    }
 
     updateStats() {
         const stats = this.seesaw.getStats();
@@ -77,6 +134,21 @@ export class Simulation {
         }
     }
 
+    updateSeesaw() {
+        this.seesaw.updatePlank();
+        this.seesaw.updateWeights();
+
+        const stats = this.seesaw.getStats();
+        document.getElementById('angle').textContent = `${stats.angle.toFixed(1)}°`;
+        requestAnimationFrame(() => this.updateSeesaw());
+    }
+
+    animateWeights() {
+        this.seesaw.animateWeights();
+        requestAnimationFrame(() => this.animateWeights());
+    }
+
+
     reset() {
         this.seesaw.reset();
         this.nextWeight = this.generateRandomWeight();
@@ -89,6 +161,8 @@ export class Simulation {
         this.updateSeesaw();
         this.animateWeights();
     }
+
+
 }
 
 

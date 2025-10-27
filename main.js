@@ -1,3 +1,3 @@
 import { Simulation } from './Simulation.js';
 
-Simulation.run();
+Simulation.getInstance();

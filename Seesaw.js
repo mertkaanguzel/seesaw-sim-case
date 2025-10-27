@@ -1,7 +1,7 @@
 import { Weight } from './Weight.js';
 
 export class Seesaw {
-    static MAX_ANGLE = 30;
+    static AngleLimit = 30;
 
     constructor(plankElement, containerElement) {
         this.plankElement = plankElement;
@@ -14,9 +14,9 @@ export class Seesaw {
         this.rightWeight = 0;
     }
 
-    addWeight(nextWeight, positionX) {
+    addWeight(weightAsKg, positionX) {
         const weight = new Weight(
-            nextWeight,
+            weightAsKg,
             positionX,
             this.containerElement,
             this.currentAngle
@@ -36,6 +36,32 @@ export class Seesaw {
         return weight;
     }
 
+    updatePlank() {
+        const torqueDiff = this.rightTorque - this.leftTorque;
+        const targetAngle = Math.max(
+            -Seesaw.AngleLimit,
+            Math.min(Seesaw.AngleLimit, torqueDiff / 10)
+        );
+
+        this.currentAngle += (targetAngle - this.currentAngle) * 0.1;
+
+        const rotateTransform = `translateX(-50%) translateY(-50%) rotate(${this.currentAngle}deg)`;
+        this.plankElement.style.transform = rotateTransform;
+    }
+
+    updateWeights() {
+        this.weights.forEach((weight) => {
+            if (!weight.falling) {
+                weight.updatePosition(this.currentAngle);
+            }
+        });
+    }
+
+    animateWeights() {
+        this.weights.forEach((weight) => {
+            weight.animate(this.currentAngle);
+        });
+    }
 
     reset() {
         this.weights.forEach((weight) => weight.remove());
