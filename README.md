@@ -5,3 +5,5 @@
 - The sim can be paused and resumed thanks to the requestAnimationFrame and cancelAnimationFrame functions.
 - I benefited from the sample solution on topics such as static components and their styles.
 - Since I wanted to write the project as object-oriented as possible, I used AI for suggestion in this regard.
+- Case live link: https://mertkaanguzel.github.io/seesaw-sim-case/
+- Case presentation link: https://drive.google.com/file/d/1XHcdCEIXoKgIbTU23L9tI-gD5dgGO2Pe/view?usp=sharing
