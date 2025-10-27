@@ -45,6 +45,7 @@ export class Simulation {
             const positionX = this.getConstrainedPosition(e);
             this.dropWeight(positionX);
             this.removePreview();
+            this.saveState();
         });
 
         this.seesawClickable.addEventListener('mousemove', (e) => {
@@ -150,6 +151,7 @@ export class Simulation {
 
 
     reset() {
+        localStorage.clear();
         this.seesaw.reset();
         this.nextWeight = this.generateRandomWeight();
         document.getElementById('log').innerHTML = '';
@@ -157,12 +159,82 @@ export class Simulation {
     }
 
     start() {
+        this.loadFromState();
         this.updateStats();
         this.updateSeesaw();
         this.animateWeights();
     }
 
+    saveState() {
+        const weights = this.seesaw.weights.map(weight => ({
+            mass: weight.mass,
+            position: weight.position,
+            distance: weight.distance,
+            side: weight.side,
+            color: weight.color
+        }));
+        const state = {
+            seesawAngle: this.seesaw.currentAngle,
+            leftTorque: this.seesaw.leftTorque,
+            rightTorque: this.seesaw.rightTorque,
+            leftWeight: this.seesaw.leftWeight,
+            rightWeight: this.seesaw.rightWeight,
+            nextWeight: this.nextWeight,
+            weightIdCounter: Weight.idCounter
+        };
 
+        localStorage.setItem('weights', JSON.stringify(weights));
+        localStorage.setItem('simState', JSON.stringify(state));
+        localStorage.setItem('logs', JSON.stringify(this.getLogs()));
+
+    }
+
+    loadFromState() {
+
+        const _weights = localStorage.getItem('weights');
+        const _simState = localStorage.getItem('simState');
+        const _logs = localStorage.getItem('logs');
+
+        if (!_simState || !_weights || !_logs) {
+            return;
+        }
+
+        try {
+
+            const weights = JSON.parse(_weights);
+            const simState = JSON.parse(_simState);
+            const logs = JSON.parse(_logs);
+
+            Weight.idCounter = simState.weightIdCounter;
+
+            weights.forEach(weightData => {
+                const weight = this.seesaw.addWeight(weightData.mass, weightData.position);
+                weight.color = weightData.color;
+                weight.element.style.background = weightData.color;
+                weight.falling = false;
+                weight.bounceVelocity = 0;
+            });
+
+            this.seesaw.currentAngle = simState.seesawAngle;
+            this.seesaw.leftTorque = simState.leftTorque;
+            this.seesaw.rightTorque = simState.rightTorque;
+            this.seesaw.leftWeight = simState.leftWeight;
+            this.seesaw.rightWeight = simState.rightWeight;
+
+            this.nextWeight = simState.nextWeight;
+
+            logs.forEach(logText => this.addLogEntry(logText));
+
+        } catch (error) {
+            console.error('Error loading state from localStorage:', error);
+        }
+    }
+
+
+    getLogs() {
+        const logDiv = document.getElementById('log');
+        return Array.from(logDiv.children).map(entry => entry.textContent);
+    }
 }
 
 
