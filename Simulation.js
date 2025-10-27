@@ -16,11 +16,16 @@ export class Simulation {
         this.seesawClickable = document.getElementById('seesawClickable');
         this.seesawContainer = document.getElementById('seesawContainer');
         this.resetBtn = document.getElementById('resetBtn');
+        this.stopBtn = document.getElementById('stopBtn');
+        this.startBtn = document.getElementById('startBtn');
 
         this.seesaw = new Seesaw(this.seesawPlank, this.seesawContainer);
         this.nextWeight = this.generateRandomWeight();
         this.previewElement = null;
         this.previewLineElement = null;
+        this.isPaused = false;
+        this.seesawAnimationsFrameId = null;
+        this.fallAnimationsFrameId = null;
 
         this.setupEventListeners();
         this.start();
@@ -41,6 +46,7 @@ export class Simulation {
 
     setupEventListeners() {
         this.seesawClickable.addEventListener('click', (e) => {
+            if (this.isPaused) return;
             e.stopPropagation();
             const positionX = this.getConstrainedPosition(e);
             this.dropWeight(positionX);
@@ -49,17 +55,27 @@ export class Simulation {
         });
 
         this.seesawClickable.addEventListener('mousemove', (e) => {
+            if (this.isPaused) return;
             e.stopPropagation();
             const positionX = this.getConstrainedPosition(e);
             this.showPreview(positionX);
         });
 
         this.seesawClickable.addEventListener('mouseleave', () => {
+            if (this.isPaused) return;
             this.removePreview();
         });
 
         this.resetBtn.addEventListener('click', () => {
             this.reset();
+        });
+
+        this.stopBtn.addEventListener('click', () => {
+            this.pause();
+        });
+
+        this.startBtn.addEventListener('click', () => {
+            this.resume();
         });
     }
 
@@ -72,9 +88,10 @@ export class Simulation {
 
     dropWeight(positionX) {
         const weight = this.seesaw.addWeight(this.nextWeight, positionX);
+        const sideLocal = weight.side === 'left' ? 'sol' : 'sağ';
 
         this.addLogEntry(
-            `📦 ${weight.mass}kg dropped on ${weight.side} side at ${weight.distance.toFixed(0)}px from center`
+            `📦 Merkezden ${weight.distance.toFixed(0)}px ${sideLocal}a ${weight.mass}kg bırakıldı`
         );
 
         this.nextWeight = this.generateRandomWeight();
@@ -136,17 +153,21 @@ export class Simulation {
     }
 
     updateSeesaw() {
+        if (this.isPaused) return;
+
         this.seesaw.updatePlank();
         this.seesaw.updateWeights();
 
         const stats = this.seesaw.getStats();
         document.getElementById('angle').textContent = `${stats.angle.toFixed(1)}°`;
-        requestAnimationFrame(() => this.updateSeesaw());
+        this.seesawAnimationsFrameId = requestAnimationFrame(() => this.updateSeesaw());
     }
 
     animateWeights() {
+        if (this.isPaused) return;
+
         this.seesaw.animateWeights();
-        requestAnimationFrame(() => this.animateWeights());
+        this.fallAnimationsFrameId = requestAnimationFrame(() => this.animateWeights());
     }
 
 
@@ -161,6 +182,7 @@ export class Simulation {
     start() {
         this.loadFromState();
         this.updateStats();
+
         this.updateSeesaw();
         this.animateWeights();
     }
@@ -226,7 +248,7 @@ export class Simulation {
             logs.forEach(logText => this.addLogEntry(logText));
 
         } catch (error) {
-            console.error('Error loading state from localStorage:', error);
+            console.error('Kaıt yüklenirken hata oluştu:', error);
         }
     }
 
@@ -234,6 +256,48 @@ export class Simulation {
     getLogs() {
         const logDiv = document.getElementById('log');
         return Array.from(logDiv.children).map(entry => entry.textContent);
+    }
+
+    pause() {
+        if (this.isPaused) return;
+
+        this.isPaused = true;
+
+        if (this.seesawAnimationsFrameId) {
+            cancelAnimationFrame(this.seesawAnimationsFrameId);
+            this.seesawAnimationsFrameId = null;
+        }
+        if (this.fallAnimationsFrameId) {
+            cancelAnimationFrame(this.fallAnimationsFrameId);
+            this.fallAnimationsFrameId = null;
+        }
+
+        this.removePreview();
+
+        this.stopBtn.disabled = true;
+        this.startBtn.disabled = false;
+        this.resetBtn.disabled = true;
+
+        this.seesawClickable.style.cursor = 'not-allowed';
+
+        this.addLogEntry('⏸️ Simülasyon duraklatıldı');
+    }
+
+    resume() {
+        if (!this.isPaused) return;
+
+        this.isPaused = false;
+
+        this.updateSeesaw();
+        this.animateWeights();
+
+        this.stopBtn.disabled = false;
+        this.startBtn.disabled = true;
+        this.resetBtn.disabled = false;
+
+        this.seesawClickable.style.cursor = 'pointer';
+
+        this.addLogEntry('▶️ Simülasyon devam ettirildi');
     }
 }
 
