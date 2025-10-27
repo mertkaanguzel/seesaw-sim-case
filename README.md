@@ -1,0 +1,6 @@
+- The project consists of the Weight, Seasaw, and Simulation classes. Since there will only be one instance of the Simulation class, I used the Singleton pattern.
+- As a seasaw has many weights and a simulation has one seesaw, there composition relations between classes.
+- To make falls smoother, it consists of falling, bouncing and settled states.
+- On each weight fall, all the state is saved to localstorage.
+- The can be paused and resumed thanks to the requestAnimationFrame and cancelAnimationFrame functions.
+- I benefited from the sample solution on topics such as static components and their styles. Since I wanted to write the project as object-oriented as possible, I used for suggestion in this regard.
